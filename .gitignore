@@ -7,3 +7,11 @@ Thumbs.db
 .idea/
 .vscode/
 .claude/
+.gradle/
+.kotlin/
+build/
+local.properties
+*.apk
+*.aab
+*.keystore
+*.jks

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Wake Guard</string>
+    <string name="tab_home">Início</string>
+    <string name="tab_alarms">Alarmes</string>
+    <string name="tab_settings">Ajustes</string>
+    <string name="home_empty">Nenhum alarme por enquanto.</string>
+    <string name="alarms_empty">Você ainda não criou nenhum alarme.</string>
+    <string name="settings_empty">Os ajustes aparecem aqui.</string>
+</resources>
