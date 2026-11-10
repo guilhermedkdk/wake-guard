@@ -3,6 +3,21 @@
 Log append-only, com a entrada mais nova no topo. Cada entrada registra o que uma sessão futura faria
 errado sem ela.
 
+### 2026-11-10 - Armadilhas do esqueleto
+
+**Armadilha:** com o JDK 25, todo teste do Robolectric falha com "Failed to interact with raw
+FileDescriptor internals", porque ele usa `jdk.internal.access`, que o JDK não exporta mais. O
+Robolectric 4.17 também não tem a imagem do Android 37, que é o `compileSdk`. E o Lint, com avisos como
+erro, recusa `android:allowBackup` sozinho no manifesto.
+**Regra:** as tasks de teste rodam com `--add-exports=java.base/jdk.internal.access=ALL-UNNAMED`. O
+Robolectric simula o Android 36, fixado em `app/src/test/resources/robolectric.properties`; só suba
+esse número junto com uma versão do Robolectric que traga a imagem nova. O manifesto aponta para um
+`data_extraction_rules.xml` que exclui tudo de backup e de transferência entre aparelhos, porque nada
+sai do aparelho. No AGP 9 o Kotlin é embutido: não existe o plugin `kotlin-android` no build, só o do
+compilador do Compose.
+**Onde:** `app/build.gradle.kts`, `app/src/test/resources/robolectric.properties`,
+`app/src/main/res/xml/data_extraction_rules.xml`.
+
 ### 2026-11-10 - Fora do escopo da primeira versão
 
 **Decisão:** ficaram de fora, por escolha do dono do projeto, e não por esquecimento:

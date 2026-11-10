@@ -25,7 +25,8 @@ Os motivos estão em `docs/DECISIONS.md`, e o que ficou de fora de propósito ta
   `.\gradlew spotlessApply` corrige a formatação.
 - Mudança de tela ou de disparo: conferir também no emulador (`.\gradlew installDebug`), e no S23 o
   que depende de aparelho de verdade: som, vibração, câmera e proteções.
-- O Gradle roda com o JDK do Android Studio, fixado em `gradle.properties`.
+- O Gradle roda com o JDK 25 do `JAVA_HOME`. O SDK do Android vem do `local.properties`, que não é
+  versionado.
 
 ## Código
 
