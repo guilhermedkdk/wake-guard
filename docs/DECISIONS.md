@@ -3,6 +3,19 @@
 Log append-only, com a entrada mais nova no topo. Cada entrada registra o que uma sessão futura faria
 errado sem ela.
 
+### 2026-11-10 - Alarmes: um banco por pacote e edição sem ViewModel
+
+**Armadilha:** um banco Room único obrigaria uma classe central a conhecer as tabelas de todos os
+pacotes. E um ViewModel por alarme, sem biblioteca de navegação, fica preso à activity: reabrir o mesmo
+alarme mostraria o rascunho antigo.
+**Regra:** cada pacote com dados tem o próprio banco, escondido atrás da sua interface; o de alarmes é
+`alarms.db`, atrás do `AlarmBook`. Os desafios ficam numa tabela filha, na ordem, e são regravados
+inteiros a cada salvamento. Tipo e dificuldade são gravados pelo nome do enum, então renomear um valor
+de `ChallengeType` ou `Difficulty` pede migration. Os dias da semana são um inteiro de bits, com a
+segunda no bit 0. O esquema exportado fica em `app/schemas` e é versionado. Na edição, cada campo é um
+`rememberSaveable`, o que mantém o rascunho ao girar a tela e o descarta ao fechar.
+**Onde:** `alarm/AlarmDatabase.kt`, `alarm/AlarmBook.kt`, `alarm/AlarmEditorScreen.kt`.
+
 ### 2026-11-10 - Armadilhas do esqueleto
 
 **Armadilha:** com o JDK 25, todo teste do Robolectric falha com "Failed to interact with raw

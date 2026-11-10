@@ -19,7 +19,7 @@ Cada linha só é marcada quando o teste que a prova existe e passa. O que depen
 
 | | Capacidade | Fase | Prova |
 | - | ---------- | ---- | ----- |
-| [ ] | Criar, editar, ativar, desativar e excluir alarmes | 1 | |
+| [x] | Criar, editar, ativar, desativar e excluir alarmes | 1 | `AlarmTest`, `AlarmBookTest`, `WakeGuardAppTest` |
 | [ ] | Alarme dispara no horário, com o celular bloqueado e a tela apagada | 1 | |
 | [ ] | Disparo só termina com todos os desafios cumpridos, ou pelo tempo máximo | 1 | |
 | [ ] | Desafios de matemática, memória, sacudir e digitar frase, com dificuldade e quantidade | 1 | |
@@ -39,7 +39,7 @@ Cada linha só é marcada quando o teste que a prova existe e passa. O que depen
 | Horário | Hora e minuto, no fuso do aparelho. |
 | Dias da semana | Nenhum ou vários. Sem nenhum, o alarme toca uma vez, na próxima vez que o horário chegar, e se desativa. |
 | Nome | Opcional, até 40 caracteres. |
-| Som | Um dos sons que vêm no app ou um toque do sistema. |
+| Som | O som padrão do app ou um toque do sistema. A escolha entra na tela junto com o disparo. |
 | Vibração | Liga ou desliga. Padrão ligada. |
 | Volume crescente | Liga ou desliga. Padrão desligado. Ligado, o som sobe de 20% ao volume do disparo em 30 segundos. |
 | Desafios | De 1 a 5, em ordem. Cada um com tipo, dificuldade e quantidade. O mesmo tipo pode repetir. |
@@ -122,7 +122,7 @@ Três abas: **Início**, **Alarmes** e **Ajustes**. Interface em pt-BR, horário
 - **Início:** o próximo alarme com contagem regressiva ("Toca em 7 h 12 min"), ou um convite para criar
   o primeiro. Na fase 2, o painel de proteções: uma linha por permissão ou proteção, com o estado e um
   atalho para corrigir o que estiver faltando. Na fase 4, o histórico.
-- **Alarmes:** lista por horário, com chave de ativar, nome, dias e os ícones dos desafios. Tocar abre a
+- **Alarmes:** lista por horário, com chave de ativar, nome, dias e os desafios. Tocar abre a
   edição; o botão "+" cria.
 - **Edição do alarme:** os campos da tabela de Alarme, a lista de desafios com adicionar, remover e
   reordenar, "Testar alarme" e excluir com confirmação.

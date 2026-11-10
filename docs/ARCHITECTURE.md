@@ -9,7 +9,7 @@ Como o código se organiza e por quê. O comportamento está em `docs/SPEC.md` e
 | ----- | ------- |
 | Linguagem e UI | Kotlin, Jetpack Compose, Material 3 |
 | Build | Gradle com Kotlin DSL, versões em `gradle/libs.versions.toml` |
-| Dados | Room para alarmes e despertares, DataStore para os ajustes |
+| Dados | Room, com um banco por pacote (`alarms.db`, depois o de despertares), e DataStore para os ajustes |
 | Câmera (fase 3) | CameraX e ML Kit (pose e rosto), com os modelos embutidos no APK |
 | Testes | JUnit para as regras, Robolectric para o que precisa do Android, testes de Compose para telas |
 | Qualidade | Spotless com ktlint, Android Lint |
@@ -39,8 +39,8 @@ máximo: o que não está na coluna do meio é `internal` ou `private`.
 
 | Pacote | Interface (o que outros pacotes usam) | O que fica escondido |
 | ------ | ------------------------------------- | -------------------- |
-| `alarm` | `Alarm`, `Alarm.nextRinging(now)`, `AlarmBook` (listar, salvar, excluir, ativar) | O cálculo do próximo disparo, as entidades e o DAO do Room, a conversão entre banco e domínio, e o `AlarmScheduler`: salvar um alarme já o agenda, ninguém de fora agenda nada. |
-| `challenge` | `ChallengeSpec` (tipo, dificuldade, quantidade), `Challenge` (estado de um desafio em andamento), `ChallengeScreen(spec, onCompleted, onInteraction)` | Um subpacote por tipo, cada um com o gerador de rodadas, a conferência da resposta e o seu composable. Sensores e câmera ficam aqui dentro. |
+| `alarm` | `Alarm`, `Alarm.nextRinging(now)`, `AlarmBook` (listar, salvar, excluir, ativar), `AlarmsScreen`, `AlarmEditorScreen` | O cálculo do próximo disparo, as entidades e o DAO do Room, a conversão entre banco e domínio, e o `AlarmScheduler`: salvar um alarme já o agenda, ninguém de fora agenda nada. |
+| `challenge` | `ChallengeSpec` (tipo, dificuldade, quantidade), `ChallengeSpecDialog` e `challengeSummary` para a edição do alarme, `Challenge` (estado de um desafio em andamento), `ChallengeScreen(spec, onCompleted, onInteraction)` | Um subpacote por tipo, cada um com o gerador de rodadas, a conferência da resposta e o seu composable. Sensores e câmera ficam aqui dentro. |
 | `ringing` | `RingingController` (`start(alarmId)`, `rehearse(alarm)`, `state`), `RingingState` | O `Ringing` (a máquina do disparo), o `RingingService`, o som, a vibração, o volume crescente, o silêncio durante o desafio, o tempo máximo, a notificação e a `RingingActivity`. |
 | `guard` (fase 2) | `ProtectionStatus`, para o painel do Início | O `GuardService` e o que ele reconhece em cada tela do sistema. Lê `RingingController.state` para saber se age. |
 | `history` (fase 4) | `WakeLog.record(...)`, `WakeLog.recent()` | A tabela de despertares e as contas de média e sequência. |
@@ -48,9 +48,13 @@ máximo: o que não está na coluna do meio é `internal` ou `private`.
 | `home` | A aba Início | A contagem regressiva e o painel. |
 | `app` | `WakeGuardApplication`, `AppContainer`, `MainActivity`, o tema e a navegação das abas | A montagem dos objetos. |
 
-Dependências: `ringing` usa `alarm`, `challenge`, `settings` e `history`; `guard` usa `ringing` e
-`settings`; `home` usa `alarm`, `guard` e `history`; `app` usa todos. `alarm`, `challenge`, `settings`
-e `history` não dependem de nenhum outro pacote de funcionalidade. Nenhum ciclo.
+Dependências: `alarm` usa `challenge`, pelo `ChallengeSpec` e pela edição de um desafio; `ringing` usa
+`alarm`, `challenge`, `settings` e `history`; `guard` usa `ringing` e `settings`; `home` usa `alarm`,
+`guard` e `history`; `app` usa todos. `challenge`, `settings` e `history` não dependem de nenhum outro
+pacote de funcionalidade. Nenhum ciclo.
+
+A navegação é um estado só em `WakeGuardApp`: a aba atual e o alarme aberto na edição. Não há
+biblioteca de navegação nem ViewModel; cada tela recebe o que usa por parâmetro.
 
 ## Regras em Kotlin puro
 

@@ -5,6 +5,71 @@
     <string name="tab_alarms">Alarmes</string>
     <string name="tab_settings">Ajustes</string>
     <string name="home_empty">Nenhum alarme por enquanto.</string>
-    <string name="alarms_empty">Você ainda não criou nenhum alarme.</string>
     <string name="settings_empty">Os ajustes aparecem aqui.</string>
+
+    <string name="alarms_empty">Você ainda não criou nenhum alarme.</string>
+    <string name="alarm_new">Novo alarme</string>
+    <string name="alarm_edit">Editar alarme</string>
+    <string name="alarm_switch">Alarme das %1$s</string>
+    <string name="alarm_once">Uma vez</string>
+    <string name="alarm_every_day">Todos os dias</string>
+    <string name="alarm_save">Salvar</string>
+    <string name="alarm_back">Voltar</string>
+    <string name="alarm_days">Repetir</string>
+    <string name="alarm_name">Nome</string>
+    <string name="alarm_vibrate">Vibração</string>
+    <string name="alarm_rising_volume">Volume crescente</string>
+    <string name="alarm_rising_volume_hint">O som sobe aos poucos nos primeiros 30 segundos.</string>
+    <string name="alarm_mute_during_challenge">Silenciar durante o desafio</string>
+    <string name="alarm_mute_during_challenge_hint">O som volta depois de 20 segundos sem interação.</string>
+    <string name="alarm_challenges">Desafios</string>
+    <string name="alarm_add_challenge">Adicionar desafio</string>
+    <string name="alarm_delete">Excluir alarme</string>
+    <string name="alarm_delete_title">Excluir este alarme?</string>
+    <string name="alarm_delete_confirm">Excluir</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+
+    <string name="day_monday">Seg</string>
+    <string name="day_tuesday">Ter</string>
+    <string name="day_wednesday">Qua</string>
+    <string name="day_thursday">Qui</string>
+    <string name="day_friday">Sex</string>
+    <string name="day_saturday">Sáb</string>
+    <string name="day_sunday">Dom</string>
+
+    <string name="challenge_dialog_title">Desafio</string>
+    <string name="challenge_summary">%1$s · %2$s · %3$s</string>
+    <string name="challenge_move_up">Mover %1$s para cima</string>
+    <string name="challenge_move_down">Mover %1$s para baixo</string>
+    <string name="challenge_remove">Remover %1$s</string>
+    <string name="challenge_less">Diminuir quantidade</string>
+    <string name="challenge_more">Aumentar quantidade</string>
+    <string name="challenge_math">Matemática</string>
+    <string name="challenge_memory">Memória</string>
+    <string name="challenge_shake">Sacudir</string>
+    <string name="challenge_typing">Digitar frase</string>
+    <string name="difficulty_easy">Fácil</string>
+    <string name="difficulty_medium">Médio</string>
+    <string name="difficulty_hard">Difícil</string>
+    <plurals name="amount_math">
+        <item quantity="one">%d conta</item>
+        <item quantity="many">%d de contas</item>
+        <item quantity="other">%d contas</item>
+    </plurals>
+    <plurals name="amount_memory">
+        <item quantity="one">%d sequência</item>
+        <item quantity="many">%d de sequências</item>
+        <item quantity="other">%d sequências</item>
+    </plurals>
+    <plurals name="amount_shake">
+        <item quantity="one">%d sacudida</item>
+        <item quantity="many">%d de sacudidas</item>
+        <item quantity="other">%d sacudidas</item>
+    </plurals>
+    <plurals name="amount_typing">
+        <item quantity="one">%d frase</item>
+        <item quantity="many">%d de frases</item>
+        <item quantity="other">%d frases</item>
+    </plurals>
 </resources>
