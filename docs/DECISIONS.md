@@ -3,6 +3,24 @@
 Log append-only, com a entrada mais nova no topo. Cada entrada registra o que uma sessão futura faria
 errado sem ela.
 
+### 2026-11-10 - Agendamento: o livro é um por processo e o "agora" não é um `Clock` guardado
+
+**Armadilha:** os receivers acordam o app sem nenhuma tela e precisam do mesmo `AlarmBook` das telas,
+mas o pacote `alarm` não pode depender do `app` para pegá-lo no `AppContainer`; e dois bancos Room
+abertos no mesmo arquivo não avisam um ao outro das mudanças. Um `Clock.systemDefaultZone()` guardado
+num campo congela o fuso do momento em que foi criado, e reagendar depois de uma troca de fuso
+calcularia no fuso antigo. Dois `PendingIntent` que só diferem nos extras são o mesmo para o sistema.
+**Regra:** `AlarmBook.of(context)` é o único jeito de obter o livro em produção e devolve sempre a
+mesma instância. O livro recebe `now: () -> ZonedDateTime` e o lê a cada cálculo. Cada alarme tem no
+máximo um agendamento, com o id do alarme como request code do `PendingIntent`; por isso agendar de novo
+substitui e cancelar não precisa saber o horário. Um alarme único se desativa em `markRung`, quando o
+horário chega, e não quando o disparo termina. As permissões são `USE_EXACT_ALARM` no Android 13 ou
+superior, concedida na instalação, e `SCHEDULE_EXACT_ALARM` só até o Android 12.
+**Conferir no emulador:** `adb shell cmd alarm set-time <ms>` e `set-timezone <fuso>` mudam o relógio
+sem root, e `adb shell dumpsys alarm` mostra o "Next alarm clock". Depois de `adb reboot`, o receiver
+de boot leva uns segundos a mais que o `sys.boot_completed` para rodar.
+**Onde:** `alarm/AlarmBook.kt`, `alarm/SystemAlarmScheduler.kt`, `alarm/AlarmReceivers.kt`.
+
 ### 2026-11-10 - Alarmes: um banco por pacote e edição sem ViewModel
 
 **Armadilha:** um banco Room único obrigaria uma classe central a conhecer as tabelas de todos os

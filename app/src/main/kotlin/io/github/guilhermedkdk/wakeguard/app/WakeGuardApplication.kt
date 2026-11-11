@@ -11,5 +11,5 @@ internal class WakeGuardApplication : Application() {
 internal class AppContainer(
     application: Application,
 ) {
-    val alarmBook by lazy { AlarmBook.open(application) }
+    val alarmBook by lazy { AlarmBook.of(application) }
 }

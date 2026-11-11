@@ -1,5 +1,7 @@
 package io.github.guilhermedkdk.wakeguard.app
 
+import android.app.AlarmManager
+import android.content.Context
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
@@ -17,7 +19,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.guilhermedkdk.wakeguard.alarm.AlarmBook
 import io.github.guilhermedkdk.wakeguard.alarm.AlarmDatabase
+import io.github.guilhermedkdk.wakeguard.alarm.SystemAlarmScheduler
 import org.junit.After
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -29,13 +34,11 @@ class WakeGuardAppTest {
     @get:Rule
     val compose = createComposeRule()
 
-    private val database =
-        Room
-            .inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AlarmDatabase::class.java)
-            .build()
+    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val database = Room.inMemoryDatabaseBuilder(context, AlarmDatabase::class.java).build()
 
     @Before
-    fun open() = compose.setContent { WakeGuardApp(AlarmBook(database)) }
+    fun open() = compose.setContent { WakeGuardApp(AlarmBook(database, SystemAlarmScheduler(context))) }
 
     @After
     fun close() = database.close()
@@ -72,6 +75,18 @@ class WakeGuardAppTest {
     }
 
     @Test
+    fun `saved alarm is handed to the system clock and switching it off takes it back`() {
+        val system = context.getSystemService(AlarmManager::class.java)
+
+        createDefaultAlarm()
+        assertNotNull(system.nextAlarmClock)
+
+        compose.onNode(isToggleable()).performClick()
+        compose.waitUntil(5_000) { system.nextAlarmClock == null }
+        assertNull(system.nextAlarmClock)
+    }
+
+    @Test
     fun `alarm can be named and given weekdays`() {
         compose.onNodeWithText("Alarmes").performClick()
         compose.onNodeWithContentDescription("Novo alarme").performClick()
@@ -102,6 +117,8 @@ class WakeGuardAppTest {
         compose.onNodeWithText("Confirmar").performClick()
         compose.onNodeWithText("Salvar").performClick()
 
+        // The editor lists the same summaries, so wait for it to close first.
+        compose.waitUntilDoesNotExist(hasText("Salvar"), 5_000)
         waitFor("Sacudir · Médio · 30 sacudidas")
         compose.onNodeWithText("Matemática · Médio · 3 contas").assertIsDisplayed()
     }

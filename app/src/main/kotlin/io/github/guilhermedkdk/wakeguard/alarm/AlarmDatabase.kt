@@ -62,6 +62,10 @@ internal abstract class AlarmDao {
     abstract fun observeAll(): Flow<List<AlarmWithChallenges>>
 
     @Transaction
+    @Query("SELECT * FROM alarm")
+    abstract suspend fun all(): List<AlarmWithChallenges>
+
+    @Transaction
     @Query("SELECT * FROM alarm WHERE id = :id")
     abstract suspend fun find(id: Long): AlarmWithChallenges?
 

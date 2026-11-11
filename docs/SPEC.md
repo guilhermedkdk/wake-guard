@@ -23,7 +23,7 @@ Cada linha só é marcada quando o teste que a prova existe e passa. O que depen
 | [ ] | Alarme dispara no horário, com o celular bloqueado e a tela apagada | 1 | |
 | [ ] | Disparo só termina com todos os desafios cumpridos, ou pelo tempo máximo | 1 | |
 | [ ] | Desafios de matemática, memória, sacudir e digitar frase, com dificuldade e quantidade | 1 | |
-| [ ] | Alarmes futuros sobrevivem a reinício e a mudança de hora ou fuso | 1 | |
+| [x] | Alarmes futuros sobrevivem a reinício e a mudança de hora ou fuso | 1 | `AlarmBookTest`; reinício e troca de fuso conferidos no emulador |
 | [ ] | Menu de energia fecha sozinho durante o disparo | 2 | |
 | [ ] | Volume travado e app preso durante o disparo | 2 | |
 | [ ] | Desinstalar e forçar parada bloqueados durante o disparo | 2 | |

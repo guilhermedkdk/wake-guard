@@ -23,10 +23,10 @@ Um módulo Gradle só, `app`. `minSdk` 31 (Android 12). Sem injeção de depend�
 | ---- | ------------------ | ---- |
 | Abas e edição | `MainActivity`, uma activity com navegação do Compose | Enquanto a pessoa usa o app |
 | Agendamento | `AlarmManager.setAlarmClock`, que acorda o app no horário | No sistema, mesmo com o app morto |
-| Entrada do disparo | `AlarmReceiver` | Um instante, só para iniciar o serviço |
+| Entrada do disparo | `AlarmReceiver`, no pacote `alarm` | Um instante: acerta o alarme no `AlarmBook` e, a partir do passo de disparo, inicia o serviço |
 | Disparo | `RingingService`, serviço em primeiro plano com som, vibração e relógio do tempo máximo | Do horário até o desfecho |
 | Tela de disparo | `RingingActivity`, por cima do bloqueio | Enquanto o disparo existe |
-| Reagendar | `RescheduleReceiver`, no boot e na mudança de hora ou fuso | Um instante |
+| Reagendar | `RescheduleReceiver`, no pacote `alarm`, no boot e na mudança de hora ou fuso | Um instante |
 | Proteções (fase 2) | `GuardService`, serviço de acessibilidade | Sempre ligado, age só durante o disparo |
 
 O disparo pertence ao serviço, não à tela. A tela pode morrer e voltar; o som, o relógio e o progresso
@@ -39,7 +39,7 @@ máximo: o que não está na coluna do meio é `internal` ou `private`.
 
 | Pacote | Interface (o que outros pacotes usam) | O que fica escondido |
 | ------ | ------------------------------------- | -------------------- |
-| `alarm` | `Alarm`, `Alarm.nextRinging(now)`, `AlarmBook` (listar, salvar, excluir, ativar), `AlarmsScreen`, `AlarmEditorScreen` | O cálculo do próximo disparo, as entidades e o DAO do Room, a conversão entre banco e domínio, e o `AlarmScheduler`: salvar um alarme já o agenda, ninguém de fora agenda nada. |
+| `alarm` | `Alarm`, `Alarm.nextRinging(now)`, `AlarmBook` (listar, salvar, excluir, ativar, `markRung`, `rescheduleAll`), `AlarmsScreen`, `AlarmEditorScreen` | O cálculo do próximo disparo, as entidades e o DAO do Room, a conversão entre banco e domínio, o `AlarmScheduler` e os dois receivers: salvar um alarme já o agenda, ninguém de fora agenda nada. `AlarmBook.of(context)` devolve o único livro do processo, que telas e receivers compartilham. |
 | `challenge` | `ChallengeSpec` (tipo, dificuldade, quantidade), `ChallengeSpecDialog` e `challengeSummary` para a edição do alarme, `Challenge` (estado de um desafio em andamento), `ChallengeScreen(spec, onCompleted, onInteraction)` | Um subpacote por tipo, cada um com o gerador de rodadas, a conferência da resposta e o seu composable. Sensores e câmera ficam aqui dentro. |
 | `ringing` | `RingingController` (`start(alarmId)`, `rehearse(alarm)`, `state`), `RingingState` | O `Ringing` (a máquina do disparo), o `RingingService`, o som, a vibração, o volume crescente, o silêncio durante o desafio, o tempo máximo, a notificação e a `RingingActivity`. |
 | `guard` (fase 2) | `ProtectionStatus`, para o painel do Início | O `GuardService` e o que ele reconhece em cada tela do sistema. Lê `RingingController.state` para saber se age. |
@@ -75,9 +75,9 @@ não decidem nada.
 
 | Seam | Produção | Teste |
 | ---- | -------- | ----- |
-| `Clock` | Relógio do sistema | Relógio fixo ou que avança à mão |
+| Agora (`() -> ZonedDateTime`) | `ZonedDateTime::now`, lido a cada uso | Instante fixo ou que avança à mão |
 | `Random` | `Random.Default` | Semente fixa |
-| `AlarmScheduler` | `AlarmManager` | Lista em memória dos agendamentos |
+| `AlarmScheduler` | `SystemAlarmScheduler`, sobre o `AlarmManager` | Mapa em memória dos agendamentos |
 | `SoundPlayer` | `MediaPlayer` no canal de alarme | Registro de tocar, pausar e volume |
 | Banco | Room em arquivo | Room em memória, pelo Robolectric |
 | Sensor de sacudida | Acelerômetro | Sequência de leituras escrita no teste |

@@ -9,10 +9,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.DayOfWeek
 import java.time.LocalTime
+import java.time.ZonedDateTime
 
-/** The alarms kept on the device. */
+/** The alarms kept on the device. Saving, activating or deleting one also schedules or cancels it. */
 class AlarmBook internal constructor(
     database: AlarmDatabase,
+    private val scheduler: AlarmScheduler,
+    // Read on every use: a cached Clock would keep the zone it was created in.
+    private val now: () -> ZonedDateTime = ZonedDateTime::now,
 ) {
     private val dao = database.alarms()
 
@@ -21,18 +25,54 @@ class AlarmBook internal constructor(
 
     suspend fun find(id: Long): Alarm? = dao.find(id)?.toAlarm()
 
-    suspend fun save(alarm: Alarm): Alarm = alarm.copy(id = dao.save(alarm.toRow(), alarm.challengeRows()))
+    suspend fun save(alarm: Alarm): Alarm =
+        alarm.copy(id = dao.save(alarm.toRow(), alarm.challengeRows())).also(::reschedule)
 
     suspend fun setActive(
         id: Long,
         active: Boolean,
-    ) = dao.setActive(id, active)
+    ) {
+        dao.setActive(id, active)
+        find(id)?.let(::reschedule)
+    }
 
-    suspend fun delete(id: Long) = dao.delete(id)
+    suspend fun delete(id: Long) {
+        dao.delete(id)
+        scheduler.cancel(id)
+    }
+
+    /**
+     * Settles an alarm whose time has come: a single alarm turns itself off and a repeating one is scheduled
+     * for its next day. Returns the alarm to ring, or null when it was deleted or switched off meanwhile.
+     */
+    suspend fun markRung(id: Long): Alarm? {
+        val alarm = find(id)?.takeIf { it.active } ?: return null
+        if (alarm.days.isEmpty()) setActive(id, false) else reschedule(alarm)
+        return alarm
+    }
+
+    /** Schedules every active alarm again, for when the system dropped or misplaced the schedules. */
+    suspend fun rescheduleAll() = dao.all().forEach { reschedule(it.toAlarm()) }
+
+    private fun reschedule(alarm: Alarm) {
+        val next = alarm.nextRinging(now())
+        if (next == null) scheduler.cancel(alarm.id) else scheduler.schedule(alarm.id, next.toInstant())
+    }
 
     companion object {
-        fun open(context: Context): AlarmBook =
-            AlarmBook(Room.databaseBuilder(context, AlarmDatabase::class.java, "alarms.db").build())
+        @Volatile private var instance: AlarmBook? = null
+
+        /** The one book of the process; receivers and screens must share the same database. */
+        fun of(context: Context): AlarmBook =
+            instance ?: synchronized(this) {
+                instance ?: create(context.applicationContext).also { instance = it }
+            }
+
+        private fun create(context: Context) =
+            AlarmBook(
+                Room.databaseBuilder(context, AlarmDatabase::class.java, "alarms.db").build(),
+                SystemAlarmScheduler(context),
+            )
     }
 }
 
