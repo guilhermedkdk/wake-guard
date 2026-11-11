@@ -21,7 +21,7 @@ Cada linha só é marcada quando o teste que a prova existe e passa. O que depen
 | - | ---------- | ---- | ----- |
 | [x] | Criar, editar, ativar, desativar e excluir alarmes | 1 | `AlarmTest`, `AlarmBookTest`, `WakeGuardAppTest` |
 | [ ] | Alarme dispara no horário, com o celular bloqueado e a tela apagada | 1 | |
-| [ ] | Disparo só termina com todos os desafios cumpridos, ou pelo tempo máximo | 1 | |
+| [x] | Disparo só termina com todos os desafios cumpridos, ou pelo tempo máximo | 1 | `RingingTest`, `RingingScreenTest`; expiração conferida no emulador |
 | [ ] | Desafios de matemática, memória, sacudir e digitar frase, com dificuldade e quantidade | 1 | |
 | [x] | Alarmes futuros sobrevivem a reinício e a mudança de hora ou fuso | 1 | `AlarmBookTest`; reinício e troca de fuso conferidos no emulador |
 | [ ] | Menu de energia fecha sozinho durante o disparo | 2 | |
@@ -39,7 +39,7 @@ Cada linha só é marcada quando o teste que a prova existe e passa. O que depen
 | Horário | Hora e minuto, no fuso do aparelho. |
 | Dias da semana | Nenhum ou vários. Sem nenhum, o alarme toca uma vez, na próxima vez que o horário chegar, e se desativa. |
 | Nome | Opcional, até 40 caracteres. |
-| Som | O som padrão do app ou um toque do sistema. A escolha entra na tela junto com o disparo. |
+| Som | O som padrão do app ou um som de alarme do sistema, escolhido no seletor do Android. Se o som escolhido não abrir, toca o padrão do app. |
 | Vibração | Liga ou desliga. Padrão ligada. |
 | Volume crescente | Liga ou desliga. Padrão desligado. Ligado, o som sobe de 20% ao volume do disparo em 30 segundos. |
 | Desafios | De 1 a 5, em ordem. Cada um com tipo, dificuldade e quantidade. O mesmo tipo pode repetir. |

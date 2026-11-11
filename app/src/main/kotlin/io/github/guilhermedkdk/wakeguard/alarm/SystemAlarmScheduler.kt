@@ -6,6 +6,15 @@ import android.content.Context
 import android.content.Intent
 import java.time.Instant
 
+private const val EXTRA_ALARM_ID = "alarmId"
+
+/** The broadcast the app sends to itself when the time of an alarm comes. */
+object AlarmTime {
+    const val ACTION = "io.github.guilhermedkdk.wakeguard.ALARM_TIME"
+
+    fun alarmId(intent: Intent): Long = intent.getLongExtra(EXTRA_ALARM_ID, 0)
+}
+
 internal class SystemAlarmScheduler(
     private val context: Context,
 ) : AlarmScheduler {
@@ -26,7 +35,7 @@ internal class SystemAlarmScheduler(
         PendingIntent.getBroadcast(
             context,
             alarmId.toInt(),
-            AlarmReceiver.intent(context, alarmId),
+            Intent(AlarmTime.ACTION).setPackage(context.packageName).putExtra(EXTRA_ALARM_ID, alarmId),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 

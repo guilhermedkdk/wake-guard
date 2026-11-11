@@ -1,6 +1,12 @@
 package io.github.guilhermedkdk.wakeguard.alarm
 
+import android.app.Activity
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,9 +44,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.IntentCompat
+import androidx.core.net.toUri
 import io.github.guilhermedkdk.wakeguard.R
 import io.github.guilhermedkdk.wakeguard.challenge.ChallengeSpec
 import io.github.guilhermedkdk.wakeguard.challenge.ChallengeSpecDialog
@@ -54,11 +63,12 @@ import java.time.LocalTime
 
 private val NEW_ALARM = Alarm(time = LocalTime.of(7, 0), challenges = listOf(ChallengeSpec(ChallengeType.MATH)))
 
-/** Creates an alarm when [alarmId] is null, otherwise edits or deletes that one. */
+/** Creates an alarm when [alarmId] is null, otherwise edits or deletes that one. [onRehearse] rings the draft. */
 @Composable
 fun AlarmEditorScreen(
     book: AlarmBook,
     alarmId: Long?,
+    onRehearse: (Alarm) -> Unit,
     onClose: () -> Unit,
 ) {
     BackHandler(onBack = onClose)
@@ -72,6 +82,7 @@ fun AlarmEditorScreen(
             original = alarm,
             onSave = { edited -> scope.launch { book.save(edited) }.invokeOnCompletion { onClose() } },
             onDelete = { scope.launch { book.delete(alarm.id) }.invokeOnCompletion { onClose() } },
+            onRehearse = onRehearse,
             onClose = onClose,
         )
     }
@@ -84,11 +95,14 @@ private fun Editor(
     original: Alarm,
     onSave: (Alarm) -> Unit,
     onDelete: () -> Unit,
+    onRehearse: (Alarm) -> Unit,
     onClose: () -> Unit,
 ) {
     val time = rememberTimePickerState(original.time.hour, original.time.minute, is24Hour = true)
     var dayBits by rememberSaveable { mutableIntStateOf(original.days.sumOf { 1 shl it.ordinal }) }
     var name by rememberSaveable { mutableStateOf(original.name) }
+    // Null is the default sound of the app.
+    var soundUri by rememberSaveable { mutableStateOf((original.sound as? AlarmSound.System)?.uri) }
     var vibrate by rememberSaveable { mutableStateOf(original.vibrate) }
     var risingVolume by rememberSaveable { mutableStateOf(original.risingVolume) }
     var muteDuringChallenge by rememberSaveable { mutableStateOf(original.muteDuringChallenge) }
@@ -96,6 +110,18 @@ private fun Editor(
     // Index of the challenge in the dialog; the list size means a new one.
     var dialogIndex by rememberSaveable { mutableStateOf<Int?>(null) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
+
+    fun draft() =
+        original.copy(
+            time = LocalTime.of(time.hour, time.minute),
+            days = DayOfWeek.entries.filterTo(mutableSetOf()) { dayBits and (1 shl it.ordinal) != 0 },
+            name = name.trim(),
+            sound = soundUri?.let(AlarmSound::System) ?: AlarmSound.Default,
+            vibrate = vibrate,
+            risingVolume = risingVolume,
+            challenges = challenges,
+            muteDuringChallenge = muteDuringChallenge,
+        )
 
     Scaffold(
         topBar = {
@@ -107,25 +133,7 @@ private fun Editor(
                     }
                 },
                 actions = {
-                    TextButton(
-                        onClick = {
-                            onSave(
-                                original.copy(
-                                    time = LocalTime.of(time.hour, time.minute),
-                                    days =
-                                        DayOfWeek.entries.filterTo(mutableSetOf()) {
-                                            dayBits and (1 shl it.ordinal) !=
-                                                0
-                                        },
-                                    name = name.trim(),
-                                    vibrate = vibrate,
-                                    risingVolume = risingVolume,
-                                    challenges = challenges,
-                                    muteDuringChallenge = muteDuringChallenge,
-                                ),
-                            )
-                        },
-                    ) { Text(stringResource(R.string.alarm_save)) }
+                    TextButton(onClick = { onSave(draft()) }) { Text(stringResource(R.string.alarm_save)) }
                 },
             )
         },
@@ -156,6 +164,7 @@ private fun Editor(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            SoundRow(soundUri) { soundUri = it }
             SwitchRow(stringResource(R.string.alarm_vibrate), null, vibrate) { vibrate = it }
             SwitchRow(
                 stringResource(R.string.alarm_rising_volume),
@@ -186,6 +195,9 @@ private fun Editor(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.alarm_add_challenge)) }
 
+            OutlinedButton(onClick = { onRehearse(draft()) }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.alarm_rehearse))
+            }
             if (original.id != 0L) {
                 TextButton(onClick = { confirmingDelete = true }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.alarm_delete), color = MaterialTheme.colorScheme.error)
@@ -216,6 +228,49 @@ private fun Editor(
                 TextButton(onClick = { confirmingDelete = false }) { Text(stringResource(R.string.cancel)) }
             },
         )
+    }
+}
+
+// Picks among the system alarm sounds; the "default" entry of the picker is the sound of the app.
+@Composable
+private fun SoundRow(
+    soundUri: String?,
+    onPick: (String?) -> Unit,
+) {
+    val context = LocalContext.current
+    val appSound = remember { "android.resource://${context.packageName}/${R.raw.alarm}".toUri() }
+    val pickerTitle = stringResource(R.string.alarm_sound_picker)
+    val picker =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
+            val picked =
+                result.data?.let {
+                    IntentCompat.getParcelableExtra(it, RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+                }
+            onPick(picked?.takeIf { it != appSound }?.toString())
+        }
+    val title =
+        remember(soundUri) {
+            soundUri?.let {
+                runCatching { RingtoneManager.getRingtone(context, it.toUri())?.getTitle(context) }.getOrNull()
+            }
+        } ?: stringResource(R.string.alarm_sound_default)
+    Row(
+        Modifier.fillMaxWidth().clickable {
+            picker.launch(
+                Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+                    .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                    .putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, pickerTitle)
+                    .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                    .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                    .putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, appSound)
+                    .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, soundUri?.toUri() ?: appSound),
+            )
+        },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(stringResource(R.string.alarm_sound), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        Text(title, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

@@ -17,6 +17,10 @@
     <string name="alarm_back">Voltar</string>
     <string name="alarm_days">Repetir</string>
     <string name="alarm_name">Nome</string>
+    <string name="alarm_sound">Som</string>
+    <string name="alarm_sound_default">Padrão do app</string>
+    <string name="alarm_sound_picker">Som do alarme</string>
+    <string name="alarm_rehearse">Testar alarme</string>
     <string name="alarm_vibrate">Vibração</string>
     <string name="alarm_rising_volume">Volume crescente</string>
     <string name="alarm_rising_volume_hint">O som sobe aos poucos nos primeiros 30 segundos.</string>
@@ -29,6 +33,14 @@
     <string name="alarm_delete_confirm">Excluir</string>
     <string name="cancel">Cancelar</string>
     <string name="confirm">Confirmar</string>
+
+    <string name="ringing_channel">Alarme tocando</string>
+    <string name="ringing_notification_title">Alarme tocando</string>
+    <string name="ringing_notification_text">Toque para voltar ao desafio.</string>
+    <string name="ringing_progress">Desafio %1$d de %2$d</string>
+    <string name="ringing_end_rehearsal">Encerrar teste</string>
+    <string name="challenge_placeholder_interact">Interagir</string>
+    <string name="challenge_placeholder_complete">Concluir desafio</string>
 
     <string name="day_monday">Seg</string>
     <string name="day_tuesday">Ter</string>

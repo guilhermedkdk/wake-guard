@@ -17,10 +17,12 @@ import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.github.guilhermedkdk.wakeguard.alarm.Alarm
 import io.github.guilhermedkdk.wakeguard.alarm.AlarmBook
 import io.github.guilhermedkdk.wakeguard.alarm.AlarmDatabase
 import io.github.guilhermedkdk.wakeguard.alarm.SystemAlarmScheduler
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -35,10 +37,11 @@ class WakeGuardAppTest {
     val compose = createComposeRule()
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val rehearsed = mutableListOf<Alarm>()
     private val database = Room.inMemoryDatabaseBuilder(context, AlarmDatabase::class.java).build()
 
     @Before
-    fun open() = compose.setContent { WakeGuardApp(AlarmBook(database, SystemAlarmScheduler(context))) }
+    fun open() = compose.setContent { WakeGuardApp(AlarmBook(database, SystemAlarmScheduler(context)), rehearsed::add) }
 
     @After
     fun close() = database.close()
@@ -121,6 +124,18 @@ class WakeGuardAppTest {
         compose.waitUntilDoesNotExist(hasText("Salvar"), 5_000)
         waitFor("Sacudir · Médio · 30 sacudidas")
         compose.onNodeWithText("Matemática · Médio · 3 contas").assertIsDisplayed()
+    }
+
+    @Test
+    fun `testing an alarm rehearses the draft without saving it`() {
+        compose.onNodeWithText("Alarmes").performClick()
+        compose.onNodeWithContentDescription("Novo alarme").performClick()
+        compose.onNodeWithText("Nome").performScrollTo().performTextInput("Academia")
+        compose.onNodeWithText("Testar alarme").performScrollTo().performClick()
+
+        assertEquals(listOf("Academia"), rehearsed.map { it.name })
+        compose.onNodeWithContentDescription("Voltar").performClick()
+        waitFor("Você ainda não criou nenhum alarme.")
     }
 
     @Test

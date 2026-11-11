@@ -3,6 +3,26 @@
 Log append-only, com a entrada mais nova no topo. Cada entrada registra o que uma sessão futura faria
 errado sem ela.
 
+### 2026-11-10 - Disparo: quem recebe o horário é o `ringing`, e o desafio ainda é provisório
+
+**Armadilha:** o `AlarmManager` precisa acordar algo que inicie o disparo, mas `alarm` não pode
+depender de `ringing`, que já depende dele. Um ensaio pode ser de um alarme nunca salvo, então não dá
+para o serviço buscá-lo pelo id. E `startForegroundService` exige `startForeground` em poucos segundos,
+mesmo quando o início é ignorado porque já há um disparo.
+**Regra:** o `alarm` agenda um broadcast com a ação `AlarmTime.ACTION`, restrito ao próprio pacote, e o
+`AlarmReceiver` do `ringing` o recebe. Disparo de verdade chega ao serviço pelo id e volta se o
+processo morrer (`START_REDELIVER_INTENT`); ensaio chega em memória pelo `RingingController` e não
+volta. A tela manda os eventos para `RingingController.service`, que só existe enquanto toca. O
+`ChallengeScreen` é provisório, com os botões "Interagir" e "Concluir desafio", até cada tipo de desafio
+ter a própria tela; a assinatura dele já é a final. O tempo máximo é uma constante de 2 minutos no
+serviço até existir a aba Ajustes. O som padrão é `res/raw/alarm.wav`, gerado por script.
+**Ainda não tratado:** sem a permissão de notificação, um disparo de verdade toca mas não abre a tela
+sozinho; o pedido da permissão entra com o Início e os Ajustes. O volume do canal de alarme do aparelho
+não é forçado. Na edição, o teclado numérico abre sozinho e cobre a tela.
+**Conferir no emulador:** `adb shell pm grant <pacote> android.permission.POST_NOTIFICATIONS`, e
+`adb shell dumpsys audio` mostra o player com `USAGE_ALARM` e o `mutedState`.
+**Onde:** `ringing/`, `challenge/ChallengeScreen.kt`, `alarm/SystemAlarmScheduler.kt`.
+
 ### 2026-11-10 - Agendamento: o livro é um por processo e o "agora" não é um `Clock` guardado
 
 **Armadilha:** os receivers acordam o app sem nenhuma tela e precisam do mesmo `AlarmBook` das telas,

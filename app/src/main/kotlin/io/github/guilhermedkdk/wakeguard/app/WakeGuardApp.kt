@@ -20,9 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import io.github.guilhermedkdk.wakeguard.R
+import io.github.guilhermedkdk.wakeguard.alarm.Alarm
 import io.github.guilhermedkdk.wakeguard.alarm.AlarmBook
 import io.github.guilhermedkdk.wakeguard.alarm.AlarmEditorScreen
 import io.github.guilhermedkdk.wakeguard.alarm.AlarmsScreen
+import io.github.guilhermedkdk.wakeguard.theme.WakeGuardTheme
 
 private enum class Tab(
     @StringRes val label: Int,
@@ -37,14 +39,17 @@ private enum class Tab(
 private const val NEW_ALARM = 0L
 
 @Composable
-internal fun WakeGuardApp(alarmBook: AlarmBook) {
+internal fun WakeGuardApp(
+    alarmBook: AlarmBook,
+    onRehearse: (Alarm) -> Unit,
+) {
     var current by rememberSaveable { mutableStateOf(Tab.HOME) }
     // Alarm open in the editor; null shows the tabs.
     var editing by rememberSaveable { mutableStateOf<Long?>(null) }
     WakeGuardTheme {
         val alarmId = editing
         if (alarmId != null) {
-            AlarmEditorScreen(alarmBook, alarmId.takeIf { it != NEW_ALARM }, onClose = { editing = null })
+            AlarmEditorScreen(alarmBook, alarmId.takeIf { it != NEW_ALARM }, onRehearse, onClose = { editing = null })
             return@WakeGuardTheme
         }
         Scaffold(

@@ -10,6 +10,6 @@ internal class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val container = (application as WakeGuardApplication).container
-        setContent { WakeGuardApp(container.alarmBook) }
+        setContent { WakeGuardApp(container.alarmBook, container.ringing::rehearse) }
     }
 }

@@ -23,7 +23,7 @@ Um módulo Gradle só, `app`. `minSdk` 31 (Android 12). Sem injeção de depend�
 | ---- | ------------------ | ---- |
 | Abas e edição | `MainActivity`, uma activity com navegação do Compose | Enquanto a pessoa usa o app |
 | Agendamento | `AlarmManager.setAlarmClock`, que acorda o app no horário | No sistema, mesmo com o app morto |
-| Entrada do disparo | `AlarmReceiver`, no pacote `alarm` | Um instante: acerta o alarme no `AlarmBook` e, a partir do passo de disparo, inicia o serviço |
+| Entrada do disparo | `AlarmReceiver`, no pacote `ringing`, que recebe o broadcast `AlarmTime` agendado pelo `alarm` | Um instante: acerta o alarme com `AlarmBook.markRung` e inicia o serviço |
 | Disparo | `RingingService`, serviço em primeiro plano com som, vibração e relógio do tempo máximo | Do horário até o desfecho |
 | Tela de disparo | `RingingActivity`, por cima do bloqueio | Enquanto o disparo existe |
 | Reagendar | `RescheduleReceiver`, no pacote `alarm`, no boot e na mudança de hora ou fuso | Um instante |
@@ -39,18 +39,19 @@ máximo: o que não está na coluna do meio é `internal` ou `private`.
 
 | Pacote | Interface (o que outros pacotes usam) | O que fica escondido |
 | ------ | ------------------------------------- | -------------------- |
-| `alarm` | `Alarm`, `Alarm.nextRinging(now)`, `AlarmBook` (listar, salvar, excluir, ativar, `markRung`, `rescheduleAll`), `AlarmsScreen`, `AlarmEditorScreen` | O cálculo do próximo disparo, as entidades e o DAO do Room, a conversão entre banco e domínio, o `AlarmScheduler` e os dois receivers: salvar um alarme já o agenda, ninguém de fora agenda nada. `AlarmBook.of(context)` devolve o único livro do processo, que telas e receivers compartilham. |
+| `alarm` | `Alarm`, `Alarm.nextRinging(now)`, `AlarmBook` (listar, salvar, excluir, ativar, `markRung`, `rescheduleAll`), `AlarmTime` (o broadcast do horário), `AlarmsScreen`, `AlarmEditorScreen` | O cálculo do próximo disparo, as entidades e o DAO do Room, a conversão entre banco e domínio, o `AlarmScheduler` e o `RescheduleReceiver`: salvar um alarme já o agenda, ninguém de fora agenda nada. `AlarmBook.of(context)` devolve o único livro do processo, que telas e receivers compartilham. |
 | `challenge` | `ChallengeSpec` (tipo, dificuldade, quantidade), `ChallengeSpecDialog` e `challengeSummary` para a edição do alarme, `Challenge` (estado de um desafio em andamento), `ChallengeScreen(spec, onCompleted, onInteraction)` | Um subpacote por tipo, cada um com o gerador de rodadas, a conferência da resposta e o seu composable. Sensores e câmera ficam aqui dentro. |
-| `ringing` | `RingingController` (`start(alarmId)`, `rehearse(alarm)`, `state`), `RingingState` | O `Ringing` (a máquina do disparo), o `RingingService`, o som, a vibração, o volume crescente, o silêncio durante o desafio, o tempo máximo, a notificação e a `RingingActivity`. |
+| `ringing` | `RingingController` (`start(alarmId)`, `rehearse(alarm)`, `state`), `RingingState` | O `Ringing` (a máquina do disparo), o `RingingService`, o `AlarmReceiver`, o `AlarmPlayer` (som e vibração), o volume crescente, o silêncio durante o desafio, o tempo máximo, a notificação e a `RingingActivity`. |
 | `guard` (fase 2) | `ProtectionStatus`, para o painel do Início | O `GuardService` e o que ele reconhece em cada tela do sistema. Lê `RingingController.state` para saber se age. |
 | `history` (fase 4) | `WakeLog.record(...)`, `WakeLog.recent()` | A tabela de despertares e as contas de média e sequência. |
 | `settings` | `Settings` (tempo máximo, volume do disparo, chaves das proteções) | O DataStore e os valores padrão. |
 | `home` | A aba Início | A contagem regressiva e o painel. |
-| `app` | `WakeGuardApplication`, `AppContainer`, `MainActivity`, o tema e a navegação das abas | A montagem dos objetos. |
+| `theme` | `WakeGuardTheme`, usado pelas duas activities | As cores. |
+| `app` | `WakeGuardApplication`, `AppContainer`, `MainActivity` e a navegação das abas | A montagem dos objetos. |
 
 Dependências: `alarm` usa `challenge`, pelo `ChallengeSpec` e pela edição de um desafio; `ringing` usa
 `alarm`, `challenge`, `settings` e `history`; `guard` usa `ringing` e `settings`; `home` usa `alarm`,
-`guard` e `history`; `app` usa todos. `challenge`, `settings` e `history` não dependem de nenhum outro
+`guard` e `history`; `app` usa todos. `theme`, `challenge`, `settings` e `history` não dependem de nenhum outro
 pacote de funcionalidade. Nenhum ciclo.
 
 A navegação é um estado só em `WakeGuardApp`: a aba atual e o alarme aberto na edição. Não há
@@ -69,7 +70,8 @@ injetado:
   já extraídos, nunca um frame.
 
 O Android fica nas bordas: serviço, receivers, sensores, câmera e composables chamam essas classes e
-não decidem nada.
+não decidem nada. O `RingingService` pergunta ao `Ringing`, a cada 250 ms, o volume e se está mudo, e
+repassa ao `AlarmPlayer`; por isso som e vibração não têm seam próprio e são conferidos no aparelho.
 
 ## Seams
 
@@ -78,7 +80,6 @@ não decidem nada.
 | Agora (`() -> ZonedDateTime`) | `ZonedDateTime::now`, lido a cada uso | Instante fixo ou que avança à mão |
 | `Random` | `Random.Default` | Semente fixa |
 | `AlarmScheduler` | `SystemAlarmScheduler`, sobre o `AlarmManager` | Mapa em memória dos agendamentos |
-| `SoundPlayer` | `MediaPlayer` no canal de alarme | Registro de tocar, pausar e volume |
 | Banco | Room em arquivo | Room em memória, pelo Robolectric |
 | Sensor de sacudida | Acelerômetro | Sequência de leituras escrita no teste |
 | Detector de pose e rosto (fase 3) | ML Kit sobre a CameraX | Sequência de ângulos e probabilidades |
